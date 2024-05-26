@@ -1,0 +1,20 @@
+.profileIncomplete {
+    text-align: center;
+    margin-top: 2rem;
+  }
+  
+  .profileIncomplete h2 {
+    color: red;
+  }
+  
+  .profileIncomplete button {
+    font: inherit;
+    cursor: pointer;
+    color: white;
+    background: #ff0055;
+    border: 1px solid #ff0055;
+    padding: 0.5rem 2rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+  }
+  

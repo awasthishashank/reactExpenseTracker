@@ -1,0 +1,64 @@
+/* CompleteProfile.module.css */
+
+.completeProfile {
+    margin: 2rem auto;
+    max-width: 400px;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .completeProfile h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .completeProfile form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .completeProfile .control {
+    margin-bottom: 1rem;
+  }
+  
+  .completeProfile label {
+    font-weight: bold;
+  }
+  
+  .completeProfile input {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .completeProfile .actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .completeProfile button {
+    font: inherit;
+    cursor: pointer;
+    color: white;
+    background-color: #007bff;
+    border: none;
+    padding: 0.5rem 2rem;
+    border-radius: 4px;
+  }
+  
+  .completeProfile button:hover {
+    background-color: #0056b3;
+  }
+  
+  .completeProfile .error {
+    color: red;
+    text-align: center;
+  }
+  
