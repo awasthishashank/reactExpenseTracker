@@ -1,3 +1,4 @@
+import React from 'react';
 import { useHistory } from 'react-router-dom';
 import classes from './ProfileIncomplete.module.css';
 
@@ -9,10 +10,10 @@ const ProfileIncomplete = () => {
   };
 
   return (
-    <section className={classes.profileIncomplete}>
-      <h2>Your profile is incomplete!</h2>
+    <div className={classes.incomplete}>
+      <p>Your profile is incomplete.</p>
       <button onClick={completeProfileHandler}>Complete Profile</button>
-    </section>
+    </div>
   );
 };
 

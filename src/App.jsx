@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { AuthContextProvider } from './store/AuthContext';
 import AuthForm from './components/Auth/AuthForm';
 import Welcome from './components/Welcome';
@@ -18,7 +18,6 @@ function App() {
           <Route path="/complete-profile">
             <CompleteProfile />
           </Route>
-          <Redirect to="/" />
         </Switch>
       </Router>
     </AuthContextProvider>
@@ -26,5 +25,3 @@ function App() {
 }
 
 export default App;
-
-

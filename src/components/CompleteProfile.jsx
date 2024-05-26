@@ -1,70 +1,118 @@
-import { useRef, useState, useContext } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useState, useEffect, useContext, useRef } from 'react';
 import AuthContext from '../store/AuthContext';
 import classes from './CompleteProfile.module.css';
 
 const CompleteProfile = () => {
-  const history = useHistory();
   const authCtx = useContext(AuthContext);
-  const fullNameInputRef = useRef();
-  const photoUrlInputRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [profileData, setProfileData] = useState({ displayName: '', photoUrl: '' });
 
-  const submitHandler = (event) => {
+  const displayNameInputRef = useRef();
+  const photoUrlInputRef = useRef();
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              idToken: authCtx.token,
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile data.');
+        }
+
+        const data = await response.json();
+        const userData = data.users[0];
+        setProfileData({ displayName: userData.displayName || '', photoUrl: userData.photoUrl || '' });
+        displayNameInputRef.current.value = userData.displayName || '';
+        photoUrlInputRef.current.value = userData.photoUrl || '';
+      } catch (err) {
+        setError(err.message);
+      }
+      setIsLoading(false);
+    };
+
+    if (authCtx.token) {
+      fetchProfileData();
+    }
+  }, [authCtx.token]);
+
+  const submitHandler = async (event) => {
     event.preventDefault();
-    const enteredFullName = fullNameInputRef.current.value;
+    const enteredDisplayName = displayNameInputRef.current.value;
     const enteredPhotoUrl = photoUrlInputRef.current.value;
 
     setIsLoading(true);
     setError(null);
 
-    fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M`, {
-      method: 'POST',
-      body: JSON.stringify({
-        idToken: authCtx.token,
-        displayName: enteredFullName,
-        photoUrl: enteredPhotoUrl,
-        returnSecureToken: true,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((res) => {
-        setIsLoading(false);
-        if (res.ok) {
-          return res.json();
-        } else {
-          return res.json().then((data) => {
-            let errorMessage = 'Profile update failed!';
-            if (data && data.error && data.error.message) {
-              errorMessage = data.error.message;
-            }
-            throw new Error(errorMessage);
-          });
+    try {
+      const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            idToken: authCtx.token,
+            displayName: enteredDisplayName,
+            photoUrl: enteredPhotoUrl,
+            returnSecureToken: true,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
         }
-      })
-      .then((data) => {
-        console.log("Profile updated successfully!");
-        history.replace('/welcome');
-      })
-      .catch((err) => {
-        setError(err.message);
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile.');
+      }
+
+      const data = await response.json();
+      authCtx.setUserProfile({
+        displayName: data.displayName,
+        photoUrl: data.photoUrl,
       });
+
+      console.log('Profile updated successfully', data);
+    } catch (err) {
+      setError(err.message);
+    }
+    setIsLoading(false);
   };
 
   return (
-    <section className={classes.completeProfile}>
+    <section className={classes.profile}>
       <h1>Complete Your Profile</h1>
       <form onSubmit={submitHandler}>
         <div className={classes.control}>
-          <label htmlFor="fullName">Full Name</label>
-          <input type="text" id="fullName" required ref={fullNameInputRef} />
+          <label htmlFor="displayName">Your Name</label>
+          <input
+            type="text"
+            id="displayName"
+            required
+            ref={displayNameInputRef}
+            defaultValue={profileData.displayName}
+          />
         </div>
         <div className={classes.control}>
-          <label htmlFor="photoUrl">Photo URL</label>
-          <input type="text" id="photoUrl" required ref={photoUrlInputRef} />
+          <label htmlFor="photoUrl">Profile Photo URL</label>
+          <input
+            type="url"
+            id="photoUrl"
+            required
+            ref={photoUrlInputRef}
+            defaultValue={profileData.photoUrl}
+          />
         </div>
         <div className={classes.actions}>
           <button type="submit">Update Profile</button>
