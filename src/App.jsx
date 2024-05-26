@@ -1,14 +1,20 @@
-
-import './App.css'
-import AuthForm from './components/Auth/SignupForm'
+import { Switch, Route, Redirect } from 'react-router-dom';
+import { AuthContextProvider } from './store/AuthContext';
+import AuthForm from './components/Auth/AuthForm';
+import Welcome from './components/Welcome';
 
 function App() {
-
-
-  return (<> 
-  <AuthForm/>
-  </>
-  )
+  return (
+    <AuthContextProvider>
+      <Switch>
+        <Route path="/" exact>
+          <AuthForm />
+        </Route>
+        <Redirect to="/" />
+      </Switch>
+    </AuthContextProvider>
+  );
 }
 
-export default App
+export default App;
+
