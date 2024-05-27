@@ -81,6 +81,38 @@ const Welcome = () => {
     fetchProfileData();
   }, [authCtx.token, authCtx]);
 
+  const fetchExpenses = async () => {
+    if (!authCtx.token) return;
+
+    try {
+      const response = await fetch(
+        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/expenses.json?auth=${authCtx.token}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch expenses.');
+      }
+
+      const data = await response.json();
+      const loadedExpenses = [];
+
+      for (const key in data) {
+        loadedExpenses.push({
+          id: key,
+          ...data[key],
+        });
+      }
+
+      setExpenses(loadedExpenses);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, [authCtx.token]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setExpenseData((prevData) => ({
@@ -89,10 +121,32 @@ const Welcome = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setExpenses((prevExpenses) => [...prevExpenses, expenseData]);
-    setExpenseData({ amount: '', description: '', category: 'Food' });
+
+    try {
+      const response = await fetch(
+        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/expenses.json?auth=${authCtx.token}`,
+        {
+          method: 'POST',
+          body: JSON.stringify(expenseData),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to store expense.');
+      }
+
+      const data = await response.json();
+      const newExpense = { id: data.name, ...expenseData };
+      setExpenses((prevExpenses) => [...prevExpenses, newExpense]);
+      setExpenseData({ amount: '', description: '', category: 'Food' });
+    } catch (error) {
+      console.error('Error storing expense:', error);
+    }
   };
 
   return (
@@ -147,7 +201,7 @@ const Welcome = () => {
                 <option value="Food">Food</option>
                 <option value="Petrol">Petrol</option>
                 <option value="Salary">Salary</option>
-                <option value="other">Other</option>
+                <option value="other">other</option>
                 
               </select>
             </div>
@@ -155,8 +209,8 @@ const Welcome = () => {
           </form>
           <h2 className="mb-3">Expenses</h2>
           <ul className="list-group">
-            {expenses.map((expense, index) => (
-              <li key={index} className="list-group-item">
+            {expenses.map((expense) => (
+              <li key={expense.id} className="list-group-item">
                 {expense.amount} - {expense.description} - {expense.category}
               </li>
             ))}
