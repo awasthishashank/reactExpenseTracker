@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    /* padding: 0; */
+}
+/* body{
+    height:100vh;
+} */
+.Header {
+    width: 100vw;
+    text-align: center;
+    margin:0;
+    padding:0px;
+    padding-bottom:30px;
+    background:#777;
+    color:white;
+}
+
+#cart{
+    position: fixed;
+    height: 95%;
+}
+.Header h1{
+    padding:40px;
+    font-size:100px;
+}
+.Header ul{
+
+    display:flex;
+    padding:10px;
+    font-size:18px;
+    font-weight:200;
+    justify-content: center;
+    list-style-type: none;
+    border-bottom:0.1rem solid white;
+    top: 0%;
+    background: black;
+    width: 100%;
+    z-index: 1;
+    margin-bottom: 25px;
+}
+.Header li{
+    margin:0px 40px;
+}
+.Header li a{
+    text-decoration: none;
+    color:white;
+}
+
+
+.Header ul a {
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+}
+.header button {
+    font: inherit;
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    font-weight: bold;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .logout{
+        border: 2px solid #56CCF2;
+        border-radius: 7px;
+        padding: 2px 10px;
+        position: absolute;
+    }

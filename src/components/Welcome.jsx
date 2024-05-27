@@ -78,7 +78,7 @@ const Welcome = () => {
 
   return (
     <section>
-      <h1>Welcome to Expense Tracker</h1>
+      <h1 className='mt-5 bg-danger'>Welcome to Expense Tracker</h1>
       {!isProfileComplete ? <ProfileIncomplete /> : <p>Profile is complete!</p>}
       {!authCtx.isEmailVerified && (
         <>
