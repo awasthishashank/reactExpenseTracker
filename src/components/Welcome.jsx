@@ -1,13 +1,19 @@
 import React, { useContext, useEffect, useState } from 'react';
 import AuthContext from '../store/AuthContext';
 import ProfileIncomplete from './ProfileIncomplete';
-import CompleteProfile from './CompleteProfile';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Welcome = () => {
   const authCtx = useContext(AuthContext);
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationError, setVerificationError] = useState(null);
   const [isProfileComplete, setIsProfileComplete] = useState(false);
+  const [expenses, setExpenses] = useState([]);
+  const [expenseData, setExpenseData] = useState({
+    amount: '',
+    description: '',
+    category: 'Food',
+  });
 
   const sendVerificationEmail = async () => {
     setVerificationSent(false);
@@ -45,7 +51,6 @@ const Welcome = () => {
     }
   };
 
-
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!authCtx.token) return;
@@ -76,21 +81,90 @@ const Welcome = () => {
     fetchProfileData();
   }, [authCtx.token, authCtx]);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setExpenseData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setExpenses((prevExpenses) => [...prevExpenses, expenseData]);
+    setExpenseData({ amount: '', description: '', category: 'Food' });
+  };
+
   return (
-    <section>
-      <h1 className='mt-5 bg-danger'>Welcome to Expense Tracker</h1>
-      {!isProfileComplete ? <ProfileIncomplete /> : <p>Profile is complete!</p>}
+    <section className="container mt-5">
+      <h1 className='mb-4 text-center bg-danger text-white p-3 rounded'>Welcome to Expense Tracker</h1>
+      {!isProfileComplete ? <ProfileIncomplete /> : <p className="alert alert-success">Profile is complete!</p>}
       {!authCtx.isEmailVerified && (
         <>
-          {!verificationSent && <button onClick={sendVerificationEmail}>Verify Email</button>}
-          {verificationSent && <p>Verification email sent successfully. Please check your inbox.</p>}
-          {verificationError && <p>{verificationError}</p>}
+          {!verificationSent && <button className="btn btn-primary mb-3" onClick={sendVerificationEmail}>Verify Email</button>}
+          {verificationSent && <p className="alert alert-success">Verification email sent successfully. Please check your inbox.</p>}
+          {verificationError && <p className="alert alert-danger">{verificationError}</p>}
         </>
       )}
-      {authCtx.isEmailVerified && <p>Your email is verified.</p>}
+      {authCtx.isEmailVerified && <p className="alert alert-success">Your email is verified.</p>}
+
+      {authCtx.isLoggedIn && (
+        <>
+          <form onSubmit={handleSubmit} className="mb-4">
+            <div className="mb-3">
+              <label htmlFor="amount" className="form-label">Amount Spent:</label>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                value={expenseData.amount}
+                onChange={handleInputChange}
+                className="form-control"
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="description" className="form-label">Description:</label>
+              <input
+                type="text"
+                id="description"
+                name="description"
+                value={expenseData.description}
+                onChange={handleInputChange}
+                className="form-control"
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="category" className="form-label">Category:</label>
+              <select
+                id="category"
+                name="category"
+                value={expenseData.category}
+                onChange={handleInputChange}
+                className="form-select"
+              >
+                <option value="Food">Food</option>
+                <option value="Petrol">Petrol</option>
+                <option value="Salary">Salary</option>
+                <option value="other">Other</option>
+                
+              </select>
+            </div>
+            <button type="submit" className="btn btn-success">Add Expense</button>
+          </form>
+          <h2 className="mb-3">Expenses</h2>
+          <ul className="list-group">
+            {expenses.map((expense, index) => (
+              <li key={index} className="list-group-item">
+                {expense.amount} - {expense.description} - {expense.category}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   );
 };
 
 export default Welcome;
-
