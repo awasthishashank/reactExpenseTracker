@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const AuthContext = React.createContext({
   token: '',
   isLoggedIn: false,
   isEmailVerified: false,
   userProfile: null,
+  userId: '',
   login: (token) => {},
   logout: () => {},
   setUserProfile: (profile) => {},
-  setVerificationStatus: (isVerified) => {}
+  setUserId: (id) => {}, 
+  setVerificationStatus: (isVerified) => {},
 });
 
 export const AuthContextProvider = (props) => {
@@ -16,6 +18,7 @@ export const AuthContextProvider = (props) => {
   const [token, setToken] = useState(initialToken);
   const [userProfile, setUserProfile] = useState(null);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [userId, setUserId] = useState('');
 
   const userIsLoggedIn = !!token;
 
@@ -28,11 +31,13 @@ export const AuthContextProvider = (props) => {
     setToken(null);
     setUserProfile(null);
     setIsEmailVerified(false);
+    setUserId('');
     localStorage.removeItem('token');
   };
 
   const setUserProfileHandler = (profile) => {
     setUserProfile(profile);
+    setUserId(profile.localId); // Set the userId from the profile
   };
 
   const setVerificationStatusHandler = (isVerified) => {
@@ -44,9 +49,12 @@ export const AuthContextProvider = (props) => {
     isLoggedIn: userIsLoggedIn,
     isEmailVerified: isEmailVerified,
     userProfile: userProfile,
+    userId: userId,
     login: loginHandler,
     logout: logoutHandler,
-    setUserProfile: setUserProfileHandler
+    setUserProfile: setUserProfileHandler,
+    setUserId: setUserId, // Updated this line
+    setVerificationStatus: setVerificationStatusHandler,
   };
 
   return (
