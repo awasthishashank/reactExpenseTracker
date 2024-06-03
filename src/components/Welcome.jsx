@@ -1,64 +1,35 @@
-import React, { useContext, useEffect, useState } from 'react';
-import AuthContext from '../store/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { authActions, sendVerificationEmail } from '../store/authSlice';
+import { fetchExpenses, addExpense, deleteExpense, updateExpense } from '../store/expensesSlice';
+import { toggleTheme } from '../store/themeSlice'; // Import the toggleTheme action
 import ProfileIncomplete from './ProfileIncomplete';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+const API_KEY = 'AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M';
+
 const Welcome = () => {
-  const authCtx = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const auth = useSelector((state) => state.auth);
+  const expenses = useSelector((state) => state.expenses.expenses);
+  const theme = useSelector((state) => state.theme); // Get the current theme
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationError, setVerificationError] = useState(null);
   const [isProfileComplete, setIsProfileComplete] = useState(false);
-  const [expenses, setExpenses] = useState([]);
   const [editingExpense, setEditingExpense] = useState(null);
 
-  const sendVerificationEmail = async () => {
-    setVerificationSent(false);
-    setVerificationError(null);
-
-    try {
-      const response = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            requestType: 'VERIFY_EMAIL',
-            idToken: authCtx.token,
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        let errorMessage = 'Failed to send verification email.';
-        if (data && data.error && data.error.message) {
-          errorMessage = data.error.message;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      console.log('Verification email sent successfully', data);
-      setVerificationSent(true);
-    } catch (err) {
-      setVerificationError(err.message);
-    }
-  };
-
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!authCtx.token) return;
+    if (!auth.token) return;
 
+    const fetchProfileData = async () => {
       try {
         const response = await fetch(
-          `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M`,
+          `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${API_KEY}`,
           {
             method: 'POST',
-            body: JSON.stringify({ idToken: authCtx.token }),
+            body: JSON.stringify({ idToken: auth.token }),
             headers: { 'Content-Type': 'application/json' },
           }
         );
@@ -69,55 +40,27 @@ const Welcome = () => {
 
         const data = await response.json();
         const userProfile = data.users[0];
-        authCtx.setUserProfile(userProfile);
+        dispatch(authActions.setUserProfile(userProfile));
         setIsProfileComplete(!!userProfile.displayName && !!userProfile.photoUrl);
-        authCtx.setUserId(userProfile.localId);
+        dispatch(authActions.setUserId(userProfile.localId));
       } catch (error) {
         console.error('Error fetching profile data:', error);
       }
     };
 
     fetchProfileData();
-  }, [authCtx.token, authCtx]);
-
-  const fetchExpenses = async () => {
-    if (!authCtx.token || !authCtx.userId) return;
-
-    try {
-      const response = await fetch(
-        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/users/${authCtx.userId}/expenses.json?auth=${authCtx.token}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch expenses.');
-      }
-
-      const data = await response.json();
-      const loadedExpenses = [];
-
-      for (const key in data) {
-        loadedExpenses.push({
-          id: key,
-          ...data[key],
-        });
-      }
-
-      setExpenses(loadedExpenses);
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
-    }
-  };
+  }, [auth.token, dispatch]);
 
   useEffect(() => {
-    if (authCtx.userId) {
-      fetchExpenses();
+    if (auth.userId) {
+      dispatch(fetchExpenses(auth.token, auth.userId));
     }
-  }, [authCtx.token, authCtx.userId]);
+  }, [auth.token, auth.userId, dispatch]);
 
   const handleAddExpense = async (expense) => {
     try {
       const response = await fetch(
-        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/users/${authCtx.userId}/expenses.json?auth=${authCtx.token}`,
+        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/users/${auth.userId}/expenses.json?auth=${auth.token}`,
         {
           method: 'POST',
           body: JSON.stringify(expense),
@@ -133,7 +76,7 @@ const Welcome = () => {
 
       const data = await response.json();
       const newExpense = { id: data.name, ...expense };
-      setExpenses((prevExpenses) => [...prevExpenses, newExpense]);
+      dispatch(addExpense(newExpense));
     } catch (error) {
       console.error('Error storing expense:', error);
     }
@@ -142,7 +85,7 @@ const Welcome = () => {
   const handleDeleteExpense = async (id) => {
     try {
       const response = await fetch(
-        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/users/${authCtx.userId}/expenses/${id}.json?auth=${authCtx.token}`,
+        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/users/${auth.userId}/expenses/${id}.json?auth=${auth.token}`,
         {
           method: 'DELETE',
         }
@@ -152,21 +95,17 @@ const Welcome = () => {
         throw new Error('Failed to delete expense.');
       }
 
-      setExpenses((prevExpenses) => prevExpenses.filter((expense) => expense.id !== id));
+      dispatch(deleteExpense(id));
       console.log('Expense successfully deleted');
     } catch (error) {
       console.error('Error deleting expense:', error);
     }
   };
 
-  const handleEditExpense = (expense) => {
-    setEditingExpense(expense);
-  };
-
   const handleUpdateExpense = async (updatedExpense) => {
     try {
       const response = await fetch(
-        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/users/${authCtx.userId}/expenses/${updatedExpense.id}.json?auth=${authCtx.token}`,
+        `https://expensetracker-ec86d-default-rtdb.firebaseio.com/users/${auth.userId}/expenses/${updatedExpense.id}.json?auth=${auth.token}`,
         {
           method: 'PUT',
           body: JSON.stringify(updatedExpense),
@@ -180,31 +119,49 @@ const Welcome = () => {
         throw new Error('Failed to update expense.');
       }
 
-      setExpenses((prevExpenses) =>
-        prevExpenses.map((expense) =>
-          expense.id === updatedExpense.id ? updatedExpense : expense
-        )
-      );
+      dispatch(updateExpense(updatedExpense));
       setEditingExpense(null);
     } catch (error) {
       console.error('Error updating expense:', error);
     }
   };
 
+  const handleSendVerificationEmail = async () => {
+    try {
+      await sendVerificationEmail(auth.token, API_KEY);
+      setVerificationSent(true);
+      setVerificationError(null);
+    } catch (error) {
+      setVerificationError('Failed to send verification email.');
+      console.error(error);
+    }
+  };
+
+  const handleToggleTheme = () => {
+    dispatch(toggleTheme());
+  };
+
   return (
-    <section>
-      <h1 className="mt-5 bg-danger text-white p-3">Welcome to Expense Tracker</h1>
+    <section className={theme === 'dark' ? 'bg-dark text-white' : 'bg-light text-dark'}>
+      <h1 className="p-3 text-center">Welcome to Expense Tracker</h1>
+      <button onClick={handleToggleTheme} className="btn btn-secondary mb-3">
+        Toggle Theme
+      </button>
       {!isProfileComplete ? <ProfileIncomplete /> : <p>Profile is complete!</p>}
-      {!authCtx.isEmailVerified && (
+      {!auth.isEmailVerified && (
         <>
-          {!verificationSent && <button onClick={sendVerificationEmail} className="btn btn-primary">Verify Email</button>}
+          {!verificationSent && (
+            <button onClick={handleSendVerificationEmail} className="btn btn-primary">
+              Verify Email
+            </button>
+          )}
           {verificationSent && <p>Verification email sent successfully. Please check your inbox.</p>}
           {verificationError && <p>{verificationError}</p>}
         </>
       )}
-      {authCtx.isEmailVerified && <p>Your email is verified.</p>}
+      {auth.isEmailVerified && <p>Your email is verified.</p>}
 
-      {authCtx.isLoggedIn && (
+      {auth.isLoggedIn && (
         <>
           <ExpenseForm
             onAddExpense={handleAddExpense}
@@ -214,7 +171,8 @@ const Welcome = () => {
           <ExpenseList
             expenses={expenses}
             onDeleteExpense={handleDeleteExpense}
-            onEditExpense={handleEditExpense}
+            onEditExpense={setEditingExpense}
+            onActivatePremium={() => alert('Premium Activated')} // Placeholder for premium activation
           />
         </>
       )}

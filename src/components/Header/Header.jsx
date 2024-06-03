@@ -1,15 +1,16 @@
-import React, { useContext } from "react";
-import "./Header.css";
+import React from "react";
 import { Link, useHistory } from "react-router-dom";
-import AuthContext from "../../store/AuthContext";
+import { useSelector, useDispatch } from "react-redux";
+import { authActions } from "../../store/authSlice";
+import "./Header.css";
 
 const Header = () => {
   const history = useHistory();
-  const authCtx = useContext(AuthContext);
-  const isLoggedIn = authCtx.isLoggedIn;
+  const dispatch = useDispatch();
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
 
   const logoutHandler = () => {
-    authCtx.logout();
+    dispatch(authActions.logout());
     history.replace("/");
   };
 

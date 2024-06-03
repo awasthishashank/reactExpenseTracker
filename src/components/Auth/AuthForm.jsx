@@ -1,11 +1,12 @@
-import { useState, useRef, useContext } from "react";
-import { useHistory } from "react-router-dom";
-import classes from "./AuthForm.module.css";
-import AuthContext from "../../store/AuthContext";
+import { useState, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import { authActions } from '../../store/authSlice';
+import classes from './AuthForm.module.css';
 
 const AuthForm = () => {
   const history = useHistory();
-  const authCtx = useContext(AuthContext);
+  const dispatch = useDispatch();
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
   const confirmPasswordInputRef = useRef();
@@ -23,38 +24,35 @@ const AuthForm = () => {
     setIsForgotPassword(true);
   };
 
-  const submitHandler = (event) => {
+  const submitHandler = async (event) => {
     event.preventDefault();
     const enteredEmail = emailInputRef.current.value;
 
     if (isForgotPassword) {
       setIsLoading(true);
-      fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M', {
-        method: 'POST',
-        body: JSON.stringify({
-          requestType: 'PASSWORD_RESET',
-          email: enteredEmail,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }).then((res) => {
-        setIsLoading(false);
-        if (res.ok) {
-          alert('Password reset email sent!');
-          setIsForgotPassword(false);
-        } else {
-          return res.json().then((data) => {
-            let errorMessage = 'Password reset failed!';
-            if (data && data.error && data.error.message) {
-              errorMessage = data.error.message;
-            }
-            throw new Error(errorMessage);
-          });
+      try {
+        const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M', {
+          method: 'POST',
+          body: JSON.stringify({
+            requestType: 'PASSWORD_RESET',
+            email: enteredEmail,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Password reset failed!');
         }
-      }).catch((err) => {
+
+        alert('Password reset email sent!');
+        setIsForgotPassword(false);
+      } catch (err) {
         setError(err.message);
-      });
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -77,38 +75,36 @@ const AuthForm = () => {
       url = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCcErHXDGkKboWX0RyiBeUrz1T2YaYHx-M";
     }
 
-    fetch(url, {
-      method: "POST",
-      body: JSON.stringify({
-        email: enteredEmail,
-        password: enteredPassword,
-        returnSecureToken: true,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => {
-        setIsLoading(false);
-        if (res.ok) {
-          return res.json();
-        } else {
-          return res.json().then((data) => {
-            let errorMessage = "Authentication Failed";
-            if (data && data.error && data.error.message) {
-              errorMessage = data.error.message;
-            }
-            throw new Error(errorMessage);
-          });
-        }
-      })
-      .then((data) => {
-        authCtx.login(data.idToken);
-        history.replace('/welcome');
-      })
-      .catch((err) => {
-        setError(err.message);
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: JSON.stringify({
+          email: enteredEmail,
+          password: enteredPassword,
+          returnSecureToken: true,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        let errorMessage = "Authentication Failed";
+        if (data && data.error && data.error.message) {
+          errorMessage = data.error.message;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      dispatch(authActions.login(data.idToken));
+      history.replace('/welcome');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

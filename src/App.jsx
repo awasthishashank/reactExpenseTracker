@@ -1,13 +1,12 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Header from "./components/Header/Header";
-import { AuthContextProvider } from "./store/AuthContext";
 import AuthForm from './components/Auth/AuthForm'
 import welcome from './components/Welcome'
+import CompleteProfile from "./components/CompleteProfile";
 
 const App = () => {
   return (
-    <AuthContextProvider>
       <Router>
         <Header />
         <Switch>
@@ -17,9 +16,10 @@ const App = () => {
           <Route path="/contact" component={ContactUs} /> */}
           <Route path="/" component={AuthForm} exact />
           <Route path="/welcome" component={welcome} exact />
+          <Route path="/complete-profile" component={CompleteProfile} exact />
+  
         </Switch>
       </Router>
-    </AuthContextProvider>
   );
 };
 

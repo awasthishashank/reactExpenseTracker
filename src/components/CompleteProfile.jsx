@@ -1,21 +1,23 @@
-import { useState, useEffect, useContext, useRef } from 'react';
-import AuthContext from '../store/AuthContext';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { authActions } from '../store/authSlice';
 import classes from './CompleteProfile.module.css';
 
 const CompleteProfile = () => {
-  const authCtx = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.auth.token);
+  const userProfile = useSelector((state) => state.auth.userProfile);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const displayNameInputRef = useRef();
   const photoUrlInputRef = useRef();
 
   useEffect(() => {
-    console.log('Current token:', authCtx.token); // Log the token to check if it's correct
-    if (authCtx.userProfile) {
-      displayNameInputRef.current.value = authCtx.userProfile.displayName || '';
-      photoUrlInputRef.current.value = authCtx.userProfile.photoUrl || '';
+    if (userProfile) {
+      displayNameInputRef.current.value = userProfile.displayName || '';
+      photoUrlInputRef.current.value = userProfile.photoUrl || '';
     }
-  }, [authCtx.userProfile, authCtx.token]);
+  }, [userProfile]);
 
   const submitHandler = async (event) => {
     event.preventDefault();
@@ -31,7 +33,7 @@ const CompleteProfile = () => {
         {
           method: 'POST',
           body: JSON.stringify({
-            idToken: authCtx.token,
+            idToken: token,
             displayName: enteredDisplayName,
             photoUrl: enteredPhotoUrl,
             returnSecureToken: true,
@@ -45,10 +47,10 @@ const CompleteProfile = () => {
       }
 
       const data = await response.json();
-      authCtx.setUserProfile({
+      dispatch(authActions.setUserProfile({
         displayName: data.displayName,
         photoUrl: data.photoUrl,
-      });
+      }));
 
       console.log('Profile updated successfully', data);
     } catch (err) {

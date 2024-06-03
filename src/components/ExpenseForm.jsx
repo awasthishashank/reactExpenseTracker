@@ -33,8 +33,9 @@ const ExpenseForm = ({ onAddExpense, editingExpense, onEditExpense }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-3">
+    <form onSubmit={handleSubmit} className="mb-3 w-50 m-auto border p-3">
       <div className="form-group">
+        <h2 className='text-center'>Expense Form</h2>
         <label htmlFor="amount">Amount Spent:</label>
         <input
           type="number"
